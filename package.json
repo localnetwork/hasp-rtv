@@ -1,0 +1,28 @@
+{
+  "name": "@hasp/rtv-editor",
+  "version": "0.1.0",
+  "description": "A lightweight React rich-text editor component.",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.js --format esm,cjs --sourcemap --clean --external react --external react-dom",
+    "dev": "tsup src/index.js --watch --sourcemap",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsup": "^8.3.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "eslint": "^9.34.0"
+  }
+}

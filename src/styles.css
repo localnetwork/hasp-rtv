@@ -1,0 +1,13 @@
+.rtv-editor__content {
+  min-height: 150px;
+  border: 1px solid #ccc;
+  padding: 8px;
+  border-radius: 6px;
+  outline: none;
+}
+
+.rtv-editor__content:empty:before {
+  content: attr(data-placeholder);
+  color: #888;
+  pointer-events: none;
+}
