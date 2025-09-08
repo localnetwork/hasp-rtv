@@ -1,20 +1,25 @@
-import { getConfig } from "../../config/env";
+import { getConfig } from "@/src/config/env";
 import BaseApi from "../_base.api";
-const variables = getConfig();
-const { HASP_TENANT_API, router } = variables;
+
 export default class BLOCKAPI {
   static async getBlockSchemaById(blockId) {
-    const response = await fetch(`${HASP_TENANT_API}/blocks/${blockId}/schema`);
+    const config = getConfig();
+
+    const response = await BaseApi.get(
+      config.HASP_TENANT_API + `/api/v2/blockcontent/${blockId}/schema`
+    );
     if (!response.ok) {
-      throw new Error("Failed to fetch block schema");
+      console.error("Failed to fetch schema:", response.statusText);
     }
-    return response.json();
+
+    return response.data.data;
   }
 
   static async updateBlockById(blockId, payload) {
+    const config = getConfig();
     try {
       const res = await BaseApi.post(
-        `/api/v2/blockcontent/${blockId}/update`,
+        config.HASP_TENANT_API + `/api/v2/blockcontent/${blockId}/update`,
         payload
       );
 

@@ -1,20 +1,57 @@
-import React, { useCallback } from "react";
+import React, { useEffect, useState } from "react";
+import { Button } from "./components/ui/button";
+import "./styles.css";
+
+import { getConfig } from "./config/env";
+import { PencilIcon } from "lucide-react";
+import RTVBlockEditor from "./components/entity/RTVBlockEditor";
 import globalStore from "./lib/store/globalStore";
-export default function RTVEditor({ children }) {
+export default function RTVEditor({
+  children,
+  entity,
+  id,
+  data,
+  setData,
+  slug,
+}) {
+  let form;
+  const [count, setCount] = useState(0);
   const isEditorOpen = globalStore((state) => state.isEditorOpen);
 
-  //   console.log("isEditorOpen", isEditorOpen);
+  useEffect(() => {
+    console.log("Mounted!");
+  }, []);
+
+  switch (entity) {
+    case "block":
+      form = (
+        <RTVBlockEditor
+          children={children}
+          entity={entity}
+          id={id}
+          slug={slug}
+          data={data}
+          setData={setData}
+        />
+      );
+      break;
+    case "content":
+      form = <RTVContentEditor />;
+      break;
+    default:
+      break;
+  }
+
   return (
-    <div>
-      {/* {children} */}
-      Hello World
-      <button
+    <div className="p-4 group hover:border hover:border-dashed rounded relative">
+      {form}
+
+      <PencilIcon
+        className="cursor-pointer w-4 h-4 hidden group-hover:inline-block ml-2 mb-1 absolute top-0 right-3"
         onClick={() => {
-          console.log("hello world");
+          globalStore.setState({ isEditorOpen: !isEditorOpen });
         }}
-      >
-        Sample Button
-      </button>
+      />
     </div>
   );
 }
