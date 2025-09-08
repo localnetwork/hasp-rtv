@@ -1,15 +1,20 @@
-import React from "react";
-import { Button } from "./components/ui/button";
-import "./styles.css";
+import React, { useCallback } from "react";
+import globalStore from "./lib/store/globalStore";
+export default function RTVEditor({ children }) {
+  const isEditorOpen = globalStore((state) => state.isEditorOpen);
 
-import { getConfig } from "./config/env";
-
-export default function RTVEditor({ children, data }) {
-  const variables = getConfig();
-
+  //   console.log("isEditorOpen", isEditorOpen);
   return (
-    <div className="p-4 hover:border hover:border-dashed rounded">
-      {children}
+    <div>
+      {/* {children} */}
+      Hello World
+      <button
+        onClick={() => {
+          console.log("hello world");
+        }}
+      >
+        Sample Button
+      </button>
     </div>
   );
 }
