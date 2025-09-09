@@ -4,11 +4,12 @@ A real-time viewer for HASPCMS.
 
 ## Overview
 
-This package is to ease the current user experience for our content editors. This package editor is inspired on how Wordpress/Drupal or other CMS work with their on page editor.
+HASP Real-Time Viewer is designed to simplify and enhance the content editing workflow. The editor takes inspiration from popular CMS platforms like WordPress and Drupal, providing an intuitive on-page editing experience.
 
 ## Features
 
-- Real-time editor
+- Real-time content editing
+- Seamless integration with HASPCMS
 
 ## Installation
 
