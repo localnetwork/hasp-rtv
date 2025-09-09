@@ -2,13 +2,19 @@ import React from "react";
 import { Input } from "../ui/input";
 
 export default function RTVInput({
-  section, // 👈 add section
+  field,
+  section,
   label,
   value,
   onChange,
   setData,
-  data,
+  key,
 }) {
+  const fieldKey = label.toLowerCase().replace(" ", "_");
+
+  console.log("key", key);
+  console.log("field", field);
+
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>
@@ -16,16 +22,18 @@ export default function RTVInput({
         placeholder="Type here..."
         value={value}
         onChange={(e) => {
-          onChange(e);
+          onChange && onChange(e);
 
           if (setData) {
             setData((prev) => {
               const currentSection = prev[section] || {};
+              const prevFields = currentSection.fields || {};
+
               return {
                 ...prev,
                 [section]: {
                   ...currentSection,
-                  [label.toLowerCase()]: e.target.value,
+                  [fieldKey]: e.target.value, // replace old value
                 },
               };
             });

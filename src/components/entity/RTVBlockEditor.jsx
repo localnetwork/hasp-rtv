@@ -28,6 +28,8 @@ export default function RTVBlockEditor({
 
   const [isLoading, setIsLoading] = React.useState(false);
 
+  const [snapshotData, setSnapshotData] = React.useState(null);
+
   // Load schema only if not already in temporarySchema
   useEffect(() => {
     if (isEditorOpen && id && !temporarySchema) {
@@ -69,6 +71,14 @@ export default function RTVBlockEditor({
     };
   }, [isDirty]);
 
+  useEffect(() => {
+    console.log("data", data);
+    if (isEditorOpen) {
+      console.log("hello worlddd");
+      setSnapshotData(data); // save the current data when editor opens
+    }
+  }, [isEditorOpen, data]);
+
   const handleChange = (section, field, value) => {
     globalStore.setState((state) => {
       const prevSection = state.temporarySchema?.[section] || {};
@@ -100,10 +110,18 @@ export default function RTVBlockEditor({
       );
       if (!confirmLeave) return;
     }
-    globalStore.setState({
-      isEditorOpen: false,
-      temporarySchema: actualSchema,
-    });
+
+    // // revert temporarySchema to the original
+    // globalStore.setState({
+    //   isEditorOpen: false,
+    //   temporarySchema: actualSchema,
+    // });
+
+    // // revert data to the snapshot
+    // if (setData) setData(snapshotData);
+
+    // reload for now
+    window.location.reload();
   };
 
   const handleSave = () => {
@@ -153,18 +171,22 @@ export default function RTVBlockEditor({
                       <h3 className="bg-black inline-block text-[10px] px-[12px] py-[1px] relative top-[-15px] text-[#f5f5f5] rounded-[0_12px]">
                         {sectionData.title || sectionKey}
                       </h3>
+
                       {Object.entries(sectionData.fields || {}).map(
                         ([fieldName, field]) => (
-                          <RTVFormfield
-                            section={sectionKey}
-                            fieldName={fieldName}
-                            field={field}
-                            onChange={handleChange}
-                            handleChange={handleChange}
-                            key={fieldName}
-                            data={data}
-                            setData={setData}
-                          />
+                          <>
+                            {console.log("fieldName", fieldName, field)}
+                            <RTVFormfield
+                              section={sectionKey}
+                              fieldName={fieldName}
+                              field={field}
+                              onChange={handleChange}
+                              handleChange={handleChange}
+                              key={field.state_name}
+                              data={data}
+                              setData={setData}
+                            />
+                          </>
                         )
                       )}
                     </div>
