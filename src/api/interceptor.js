@@ -7,7 +7,6 @@ export default function setup(axios) {
   axios.interceptors.request.use((config) => {
     // const token = parseCookies("token");
     const variables = getConfig();
-    console.log("helloooo", variables);
     config.headers["Authorization"] = `Bearer ` + variables?.query?.token;
     // config.headers["X-Rate-Key"] = RATE_LIMIT_KEY;
     config.headers["Strict-Transport-Security"] = "max-age=31536000";
