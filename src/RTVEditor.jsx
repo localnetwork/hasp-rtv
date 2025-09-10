@@ -63,9 +63,9 @@ export default function RTVEditor({
       <button
         className="cursor-pointer group/inner group-hover/outer:opacity-100 z-[100] hover:opacity-70 rtv-pencil bg-[#000] group-hover/inner:opacity-60 text-white py-2 gap-x-2 px-5 hidden group-hover/outer:inline-flex items-center ml-2 mb-1 absolute top-0 right-3"
         onClick={() => {
-          globalStore.setState({ isEditorOpen: !isEditorOpen });
           globalStore.setState({
-            editorInfo: { entity, id, slug, data, setData },
+            isEditorOpen: true,
+            editorInfo: { entity, id, slug, data, setData, name },
           });
         }}
       >

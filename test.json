@@ -1,0 +1,11 @@
+{
+  "main": { "title": "new block content" },
+  "sample_media": {
+    "image": [
+      "https://streetphotography.com/wp-content/uploads/2017/08/test.png",
+      "https://haspcms-halcyon-agile.s3.ap-southeast-1.amazonaws.com/88HvNXj9Yz2syTGQrskP2UIG1JemfT-metaMTg1LVJlY292ZXJlZC1SZWNvdmVyZWQgMy53ZWJw-.webp"
+    ],
+    "test": ["17", "18", "16"]
+  },
+  "new_section": { "sample_text": "this is a subtitle" }
+}

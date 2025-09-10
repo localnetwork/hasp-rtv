@@ -31,9 +31,10 @@ export default function RTVMedia({ onChange, values = [], label, blockId }) {
 
       try {
         // ✅ 2. Upload file
+        console.log("try uploaddd");
         const uploaded = await MEDIAAPI.createMedia({
           content: "media",
-          title: file.name,
+          title: "hello world",
           status: "1",
           locale: "en",
           data: { media: { media: [preview] } },

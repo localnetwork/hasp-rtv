@@ -10,48 +10,71 @@ import {
 import { Button } from "@/src/components/ui/button";
 import { AngryIcon, RefreshCcw } from "lucide-react";
 
-// Dynamic import of RTVFormfield
 const RTVFormfield = lazy(() => import("../fields/RTVFormfield"));
 
-export default function RTVBlockEditor({
-  children,
-  entity,
-  id,
-  slug,
-  data,
-  name,
-  setData,
-}) {
-  const isEditorOpen = globalStore((state) => state.isEditorOpen);
-  const actualSchema = globalStore((state) => state.actualSchema);
-  const temporarySchema = globalStore((state) => state.temporarySchema);
+export default function RTVBlockEditor({ children }) {
+  const isEditorOpen = globalStore((s) => s.isEditorOpen);
+  const editorInfo = globalStore((s) => s.editorInfo);
+  const schemasById = globalStore((s) => s.schemasById);
+
+  const editorId = editorInfo?.id;
+  const entry = editorId ? schemasById[editorId] : null;
+  const actualSchema = entry?.actualSchema || null;
+  const temporarySchema = entry?.temporarySchema || null;
 
   const [isLoading, setIsLoading] = React.useState(false);
-
   const [snapshotData, setSnapshotData] = React.useState(null);
 
-  // Load schema only if not already in temporarySchema
+  // Load schema for the active editor id (only if we don't already have it)
   useEffect(() => {
-    if (isEditorOpen && id && !temporarySchema) {
-      const fetchSchema = async () => {
-        setIsLoading(true);
-        try {
-          const res = await BLOCKAPI.getBlockSchemaById(id);
-          const blockSchema = res?.attributes?.data_schema || {};
+    if (!isEditorOpen || !editorId) return;
+    if (temporarySchema) return; // already loaded
 
-          globalStore.setState({
-            actualSchema: blockSchema,
-            temporarySchema: JSON.parse(JSON.stringify(blockSchema)),
-          });
+    let cancelled = false;
+    const fetchSchema = async () => {
+      setIsLoading(true);
+      try {
+        const res = await BLOCKAPI.getBlockSchemaById(editorId);
+        // if user opened another editor while we fetched, abort committing
+        if (globalStore.getState().editorInfo?.id !== editorId) {
           setIsLoading(false);
-        } catch (error) {
-          setIsLoading(false);
+          return;
+        }
+
+        const blockSchema = res?.attributes?.data_schema || {};
+        globalStore.setState((state) => ({
+          schemasById: {
+            ...state.schemasById,
+            [editorId]: {
+              actualSchema: blockSchema,
+              temporarySchema: JSON.parse(JSON.stringify(blockSchema)),
+            },
+          },
+        }));
+      } catch (error) {
+        if (globalStore.getState().editorInfo?.id === editorId) {
           console.error("Error fetching block schema:", error);
         }
-      };
-      fetchSchema();
+      } finally {
+        if (globalStore.getState().editorInfo?.id === editorId) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchSchema();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditorOpen, editorId]);
+
+  // snapshot the incoming block data when editor opens
+  useEffect(() => {
+    if (isEditorOpen) {
+      setSnapshotData(editorInfo?.data ?? null);
     }
-  }, [id, isEditorOpen, temporarySchema]);
+  }, [isEditorOpen, editorInfo?.data]);
 
   const isDirty = useMemo(() => {
     if (!actualSchema || !temporarySchema) return false;
@@ -66,44 +89,22 @@ export default function RTVBlockEditor({
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
-  useEffect(() => {
-    console.log("data", data);
-    if (isEditorOpen) {
-      console.log("hello worlddd");
-      setSnapshotData(data); // save the current data when editor opens
-    }
-  }, [isEditorOpen, data]);
-
   const handleChange = (section, field, value) => {
-    globalStore.setState((state) => {
-      const prevSection = state.temporarySchema?.[section] || {};
-      const prevFields = prevSection.fields || {};
-      const prevField = prevFields[field] || {};
-
-      return {
-        temporarySchema: {
-          ...state.temporarySchema,
-          [section]: {
-            ...prevSection,
-            fields: {
-              ...prevFields,
-              [field]: {
-                ...prevField,
-                value: Array.isArray(value) ? [...value] : value,
-              },
-            },
-          },
-        },
-      };
-    });
+    if (!editorId) return;
+    globalStore
+      .getState()
+      .updateTemporaryFieldForId(editorId, section, field, value);
   };
 
   const handleCancel = () => {
+    if (!editorId) {
+      globalStore.setState({ isEditorOpen: false, editorInfo: null });
+      return;
+    }
+
     if (isDirty) {
       const confirmLeave = window.confirm(
         "You have unsaved changes. Are you sure you want to discard them?"
@@ -111,25 +112,36 @@ export default function RTVBlockEditor({
       if (!confirmLeave) return;
     }
 
-    // // revert temporarySchema to the original
-    // globalStore.setState({
-    //   isEditorOpen: false,
-    //   temporarySchema: actualSchema,
-    // });
+    // revert temp -> actual for this id and close editor
+    globalStore.getState().replaceTemporaryWithActualForId(editorId);
+    globalStore.setState({ isEditorOpen: false, editorInfo: null });
 
-    // // revert data to the snapshot
-    // if (setData) setData(snapshotData);
-
-    // reload for now
-    window.location.reload();
+    // restore component-level data snapshot if provided by the original setter
+    if (editorInfo?.setData && snapshotData) {
+      editorInfo.setData(snapshotData);
+    }
   };
 
   const handleSave = () => {
-    if (setData) setData(temporarySchema);
-    globalStore.setState({
-      actualSchema: temporarySchema,
+    if (!editorId) return;
+    const entry = globalStore.getState().schemasById[editorId];
+    if (!entry) return;
+    const newActual = entry.temporarySchema;
+
+    // call the block's setData (if supplied) so the rest of the UI updates
+    if (editorInfo?.setData) {
+      editorInfo.setData(newActual);
+    }
+
+    // commit temporary -> actual and close editor
+    globalStore.setState((state) => ({
+      schemasById: {
+        ...state.schemasById,
+        [editorId]: { ...state.schemasById[editorId], actualSchema: newActual },
+      },
       isEditorOpen: false,
-    });
+      editorInfo: null,
+    }));
   };
 
   return (
@@ -138,15 +150,19 @@ export default function RTVBlockEditor({
 
       <Sheet
         open={isEditorOpen}
-        onOpenChange={(open) => globalStore.setState({ isEditorOpen: open })}
+        onOpenChange={(open) => {
+          if (!open)
+            globalStore.setState({ isEditorOpen: false, editorInfo: null });
+        }}
       >
         <SheetContent className="overflow-y-auto flex flex-col rtv-sheet min-w-[500px]">
           <SheetHeader>
-            <SheetTitle>Editing {name} block</SheetTitle>
+            <SheetTitle>Editing {editorInfo?.name || "block"}</SheetTitle>
           </SheetHeader>
 
           <div className="mt-4 px-4 space-y-6 flex-1">
             {isLoading && <p>Loading schema...</p>}
+
             {!isLoading && !temporarySchema && (
               <div className="flex flex-col gap-2 min-h-[450px] text-black items-center justify-center text-center">
                 <AngryIcon className="inline-block mr-2 w-[50px] h-[50px]" />
@@ -174,19 +190,18 @@ export default function RTVBlockEditor({
 
                       {Object.entries(sectionData.fields || {}).map(
                         ([fieldName, field]) => (
-                          <>
-                            {console.log("fieldName", fieldName, field)}
-                            <RTVFormfield
-                              section={sectionKey}
-                              fieldName={fieldName}
-                              field={field}
-                              onChange={handleChange}
-                              handleChange={handleChange}
-                              key={field.state_name}
-                              data={data}
-                              setData={setData}
-                            />
-                          </>
+                          <RTVFormfield
+                            section={sectionKey}
+                            fieldName={fieldName}
+                            field={field}
+                            onChange={handleChange}
+                            handleChange={handleChange}
+                            key={
+                              field.state_name || `${sectionKey}.${fieldName}`
+                            }
+                            data={editorInfo?.data}
+                            setData={editorInfo?.setData}
+                          />
                         )
                       )}
                     </div>

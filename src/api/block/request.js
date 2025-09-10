@@ -15,6 +15,19 @@ export default class BLOCKAPI {
     return response.data.data;
   }
 
+  static async createBlock(payload) {
+    const config = getConfig();
+    try {
+      const res = await BaseApi.post(
+        config.HASP_TENANT_API + `/api/v2/blockcontent/:page/store`,
+        payload
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Error. Unable to create block.");
+    }
+  }
+
   static async updateBlockById(blockId, payload) {
     const config = getConfig();
     try {

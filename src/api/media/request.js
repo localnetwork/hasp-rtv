@@ -4,6 +4,7 @@ import BaseApi from "../_base.api";
 
 export default class MEDIAAPI {
   static async createMedia(payload = {}) {
+    console.log("payload", payload);
     try {
       const config = getConfig();
 

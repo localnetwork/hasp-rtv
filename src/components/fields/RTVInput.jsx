@@ -12,9 +12,6 @@ export default function RTVInput({
 }) {
   const fieldKey = label.toLowerCase().replace(" ", "_");
 
-  console.log("key", key);
-  console.log("field", field);
-
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>
